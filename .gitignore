@@ -1,0 +1,8 @@
+# Hostinger runtime files that live in public_html but must NEVER be
+# tracked in antim_prompt_web_ui_dict. If Hostinger Git runs `git clean`
+# (without -x) or `git reset`, these ignored untracked paths are left alone.
+uploads/
+upload_handler.php
+weather_media_sync.php
+*.php
+.ftp-deploy-sync-state.json
