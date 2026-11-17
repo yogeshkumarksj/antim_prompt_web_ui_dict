@@ -6,7 +6,7 @@ import { r as artUrl, t as Footer } from "./index-RMZ4YpJu.js";
 import { c as serviceById, u as PageHeader } from "./BusinessFacts-Dps7jRTH.js";
 import { a as normalizeArt, i as interpretAiResponse, n as artRequestBody, r as interpretAiError } from "./aiFeature-Cx7U9uqu.js";
 import { n as ReportList } from "./AiToolScreen-ISyi6LGU.js";
-import { PhotoFrame } from "./photoFrame.js";
+import { Masonry, PhotoFrame, PhotoMeta } from "./photoFrame.js";
 
 const React = interop(ReactNS(), 1);
 const jsx = jsxRuntime();
@@ -126,15 +126,63 @@ function CopyBlock({ label, text, buttonLabel = "Copy" }) {
   });
 }
 
-function ArtVisual({ trend }) {
+function ArtVisual({ trend, onMetrics }) {
   const src = safeHttpUrl(trend?.image_url);
   if (!src) {
     return (0, jsx.jsx)("div", {
-      className: "flex h-44 w-full items-end bg-gradient-to-r from-primaryPurple to-secondaryBlue p-5",
+      className: "flex w-full items-end bg-gradient-to-r from-primaryPurple to-secondaryBlue p-5",
+      style: { aspectRatio: "4 / 5" },
       children: (0, jsx.jsx)("span", { className: "text-lg font-black text-white", children: trend?.name || "Trend" }),
     });
   }
-  return (0, jsx.jsx)(PhotoFrame, { src, alt: trend?.name || "", meta: trend });
+  return (0, jsx.jsx)(PhotoFrame, { src, alt: trend?.name || "", meta: trend, hideCaption: true, onMetrics });
+}
+
+function TrendFooter({ meta, title, aside }) {
+  return (0, jsx.jsxs)("div", {
+    className: "p-3",
+    children: [
+      meta?.caption ? (0, jsx.jsx)(PhotoMeta, { caption: meta.caption, orient: meta.orient }) : null,
+      (0, jsx.jsx)("h3", { className: `${meta?.caption ? "mt-2 " : ""}font-bold text-gray-800 text-sm line-clamp-1`, children: title }),
+      aside ? (0, jsx.jsx)("div", { className: "mt-2 flex items-center justify-between", children: aside }) : null,
+    ],
+  });
+}
+
+function IdeaCard({ trend }) {
+  const [meta, setMeta] = (0, React.useState)(null);
+  return (0, jsx.jsxs)("article", {
+    className: "overflow-hidden rounded-[2rem] border border-gridBorder bg-white shadow-sm",
+    children: [
+      trend.imageUrl ? (0, jsx.jsx)(PhotoFrame, { src: trend.imageUrl, alt: trend.name || "", meta: { image_url: trend.imageUrl }, hideCaption: true, onMetrics: setMeta }) : null,
+      (0, jsx.jsxs)("div", { className: "p-3", children: [
+        meta?.caption ? (0, jsx.jsx)(PhotoMeta, { caption: meta.caption, orient: meta.orient }) : null,
+        (0, jsx.jsx)("h3", { className: `${meta?.caption ? "mt-2 " : ""}font-bold text-gray-800 text-sm line-clamp-1`, children: trend.name }),
+        trend.why && (0, jsx.jsx)("p", { className: "mt-3 text-sm leading-relaxed text-gray-600", children: trend.why }),
+        trend.visualCues.length > 0 && (0, jsx.jsx)("div", { className: "mt-3 flex flex-wrap gap-2", children: trend.visualCues.map((cue) => (0, jsx.jsx)("span", { className: "rounded-full bg-pink-50 px-2.5 py-1 text-xs font-bold text-accentPink", children: cue }, cue)) }),
+        trend.caption && (0, jsx.jsxs)("p", { className: "mt-3 text-sm text-gray-700", children: [(0, jsx.jsx)("span", { className: "font-black text-gray-400", children: "Caption · " }), trend.caption] }),
+        trend.prompt && (0, jsx.jsx)(CopyBlock, { label: "Prompt", text: trend.prompt, buttonLabel: "Copy prompt" }),
+        trend.negativePrompt && (0, jsx.jsx)(CopyBlock, { label: "Negative prompt", text: trend.negativePrompt }),
+      ] }),
+    ],
+  });
+}
+
+function TrendTile({ trend, aside, onOpen }) {
+  const [meta, setMeta] = (0, React.useState)(null);
+  return (0, jsx.jsxs)("button", {
+    type: "button",
+    onClick: () => onOpen(trend),
+    className: "w-full overflow-hidden rounded-[2rem] border border-gridBorder bg-white text-left shadow-sm transition-all hover:shadow-lg",
+    children: [
+      (0, jsx.jsx)(ArtVisual, { trend, onMetrics: setMeta }),
+      (0, jsx.jsx)(TrendFooter, {
+        meta,
+        title: trend.name || "Untitled trend",
+        aside: aside ? (0, jsx.jsx)("span", { className: "truncate text-[10px] font-extrabold uppercase tracking-wider text-accentPink", style: { minWidth: 0 }, children: aside }) : null,
+      }),
+    ],
+  });
 }
 
 function ArtResults({ result }) {
@@ -155,22 +203,8 @@ function ArtResults({ result }) {
           result.disclaimer && (0, jsx.jsx)("p", { className: "mt-4 text-sm leading-relaxed text-gray-500", children: result.disclaimer }),
         ],
       }),
-      result.trends.length > 0 && (0, jsx.jsx)("div", {
-        className: "photo-masonry photo-masonry-art",
-        children: result.trends.map((trend) => (0, jsx.jsxs)("article", {
-          className: "overflow-hidden rounded-[2rem] border border-gridBorder bg-white shadow-sm",
-          children: [
-            trend.imageUrl ? (0, jsx.jsx)(PhotoFrame, { src: trend.imageUrl, alt: trend.name || "", meta: { image_url: trend.imageUrl } }) : null,
-            (0, jsx.jsxs)("div", { className: "p-6", children: [
-              (0, jsx.jsx)("h3", { className: "text-xl font-black tracking-tight text-gray-900", children: trend.name }),
-              trend.why && (0, jsx.jsx)("p", { className: "mt-3 text-sm leading-relaxed text-gray-600", children: trend.why }),
-              trend.visualCues.length > 0 && (0, jsx.jsx)("div", { className: "mt-3 flex flex-wrap gap-2", children: trend.visualCues.map((cue) => (0, jsx.jsx)("span", { className: "rounded-full bg-pink-50 px-2.5 py-1 text-xs font-bold text-accentPink", children: cue }, cue)) }),
-              trend.caption && (0, jsx.jsxs)("p", { className: "mt-3 text-sm text-gray-700", children: [(0, jsx.jsx)("span", { className: "font-black text-gray-400", children: "Caption · " }), trend.caption] }),
-              trend.prompt && (0, jsx.jsx)(CopyBlock, { label: "Prompt", text: trend.prompt, buttonLabel: "Copy prompt" }),
-              trend.negativePrompt && (0, jsx.jsx)(CopyBlock, { label: "Negative prompt", text: trend.negativePrompt }),
-            ] }),
-          ],
-        }, trend.id)),
+      result.trends.length > 0 && (0, jsx.jsx)(Masonry, {
+        children: result.trends.map((trend) => (0, jsx.jsx)(IdeaCard, { trend }, trend.id)),
       }),
       (0, jsx.jsx)(ReportList, { title: "Workflow", items: result.workflow }),
     ],
@@ -326,19 +360,11 @@ function ArtTrends() {
           limit && !loading && (0, jsx.jsx)(LimitNote, {}),
           !limit && (0, jsx.jsx)(ErrorNote, { message: error }),
           !loading && !limit && !error && (0, jsx.jsxs)("div", { className: "mt-8", children: [
-            trends.length === 0 ? (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "No trends in this category yet." }) : (0, jsx.jsx)("div", {
-              className: "photo-masonry photo-masonry-art",
-              children: trends.map((trend, index) => (0, jsx.jsxs)("button", {
-                type: "button",
-                onClick: () => setSelected(trend),
-                className: "w-full overflow-hidden rounded-[2rem] border border-gridBorder bg-white text-left shadow-sm transition-all hover:shadow-lg",
-                children: [
-                  (0, jsx.jsx)(ArtVisual, { trend }),
-                  (0, jsx.jsxs)("div", { className: "p-5", children: [
-                    (0, jsx.jsx)("h3", { className: "text-lg font-black tracking-tight text-gray-900", children: trend.name || "Untitled trend" }),
-                    isAll && trend.category ? (0, jsx.jsx)("p", { className: "mt-1 text-xs font-bold uppercase tracking-widest text-gray-400", children: categoryLabel(trend.category, categories) }) : null,
-                  ] }),
-                ],
+            trends.length === 0 ? (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "No trends in this category yet." }) : (0, jsx.jsx)(Masonry, {
+              children: trends.map((trend, index) => (0, jsx.jsx)(TrendTile, {
+                trend,
+                aside: isAll && trend.category ? categoryLabel(trend.category, categories) : "",
+                onOpen: setSelected,
               }, trend.id ?? `${trend.name ?? "trend"}-${index}`)),
             }),
             disclaimer && (0, jsx.jsx)("p", { className: "mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-gray-500", children: disclaimer }),
