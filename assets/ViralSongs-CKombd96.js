@@ -165,17 +165,71 @@ function CoverArt({ song, gradientId }) {
   return (0, jsx.jsx)(CoverPlaceholder, { gradientId });
 }
 
-function ChartSong({ song, index, isAll, categories, copied, onCopy }) {
+function PlayGlyph() {
+  return (0, jsx.jsx)("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 24 24",
+    fill: "currentColor",
+    "aria-hidden": "true",
+    children: (0, jsx.jsx)("path", { d: "M8 5v14l11-7z" }),
+  });
+}
+
+function PauseGlyph() {
+  return (0, jsx.jsx)("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 24 24",
+    fill: "currentColor",
+    "aria-hidden": "true",
+    children: (0, jsx.jsx)("path", { d: "M6 5h4v14H6zm8 0h4v14h-4z" }),
+  });
+}
+
+function ChartSong({ song, index, isAll, categories, copied, onCopy, playingKey, onPlay }) {
   const rank = isAll ? (song.overall_rank ?? song.rank ?? index + 1) : (song.rank ?? index + 1);
   const tags = Array.isArray(song.hashtags) ? song.hashtags : [];
   const searchText = typeof song.search_text === "string" ? song.search_text : "";
   const key = `${song.rank ?? index}-${song.title ?? index}`;
   const reels = reelsLabel(song.reels_count);
+  const preview = safeHttpUrl(song?.preview_url);
+  const playing = playingKey === key;
   return (0, jsx.jsxs)("article", {
     className: "song-chart-card rounded-[2rem] border border-gridBorder bg-white p-5 shadow-sm sm:p-6",
     children: [
       (0, jsx.jsx)("div", { className: "song-chart-rank flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-lg font-black text-primaryPurple", children: rank }),
-      (0, jsx.jsx)("div", { className: "song-chart-cover", children: (0, jsx.jsx)(CoverArt, { song, gradientId: `song-cover-${index}` }) }),
+      (0, jsx.jsxs)("div", {
+        className: "song-chart-cover",
+        style: { position: "relative", width: COVER_SIZE, height: COVER_SIZE },
+        children: [
+          (0, jsx.jsx)(CoverArt, { song, gradientId: `song-cover-${index}` }),
+          preview ? (0, jsx.jsx)("button", {
+            type: "button",
+            "aria-label": playing ? "Pause preview" : "Play preview",
+            "aria-pressed": playing,
+            onClick: () => onPlay(key, preview),
+            style: {
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: 28,
+              height: 28,
+              transform: "translate(-50%, -50%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: 0,
+              borderRadius: 999,
+              padding: 0,
+              background: "rgba(15, 23, 42, 0.55)",
+              color: "#fff",
+              cursor: "pointer",
+            },
+            children: playing ? (0, jsx.jsx)(PauseGlyph, {}) : (0, jsx.jsx)(PlayGlyph, {}),
+          }) : null,
+        ],
+      }),
       (0, jsx.jsxs)("div", { className: "song-chart-body", style: { minWidth: 0 }, children: [
         (0, jsx.jsx)("h3", { className: "break-words text-xl font-black tracking-tight text-gray-900", children: song.title || "Untitled track" }),
         song.artist && (0, jsx.jsx)("p", { className: "mt-1 break-words text-sm font-bold text-secondaryBlue", children: song.artist }),
@@ -203,6 +257,27 @@ function ViralSongs() {
   const [chartError, setChartError] = (0, React.useState)("");
   const [chartLimit, setChartLimit] = (0, React.useState)(false);
   const [copied, setCopied] = (0, React.useState)("");
+  const [playingKey, setPlayingKey] = (0, React.useState)("");
+  const audioRef = (0, React.useRef)(null);
+  const playTicket = (0, React.useRef)(0);
+
+  (0, React.useEffect)(() => {
+    const audio = new Audio();
+    audio.preload = "none";
+    audioRef.current = audio;
+    const onEnded = () => setPlayingKey("");
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.pause();
+      audio.removeEventListener("ended", onEnded);
+      audioRef.current = null;
+    };
+  }, []);
+
+  (0, React.useEffect)(() => {
+    audioRef.current?.pause();
+    setPlayingKey("");
+  }, [category]);
 
   (0, React.useEffect)(() => {
     let cancel = false;
@@ -275,6 +350,31 @@ function ViralSongs() {
     }
   };
 
+  const togglePreview = async (key, url) => {
+    const audio = audioRef.current;
+    if (!audio || !url) return;
+    const same = audio.dataset.songKey === key;
+    if (same && !audio.paused) {
+      audio.pause();
+      setPlayingKey("");
+      return;
+    }
+    const ticket = ++playTicket.current;
+    if (!same) {
+      audio.src = url;
+      audio.dataset.songKey = key;
+      audio.currentTime = 0;
+    } else if (audio.ended) {
+      audio.currentTime = 0;
+    }
+    try {
+      await audio.play();
+      if (ticket === playTicket.current) setPlayingKey(key);
+    } catch {
+      if (ticket === playTicket.current) setPlayingKey("");
+    }
+  };
+
   const chips = [{ id: "all", label: "All" }, ...(categories.length ? categories : [{ id: "trending", label: "Trending" }])];
   const isAll = category === "all";
 
@@ -312,7 +412,7 @@ function ViralSongs() {
           chartLimit && !chartLoading && (0, jsx.jsx)(LimitNote, {}),
           !chartLimit && (0, jsx.jsx)(ErrorNote, { message: chartError }),
           !chartLoading && !chartLimit && !chartError && chart && (0, jsx.jsxs)("div", { className: "mt-8 space-y-4", children: [
-            chart.songs.length === 0 ? (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "No songs in this category yet." }) : chart.songs.map((song, index) => (0, jsx.jsx)(ChartSong, { song, index, isAll, categories, copied, onCopy: copySearch }, `${song.rank ?? index}-${song.title ?? index}`)),
+            chart.songs.length === 0 ? (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "No songs in this category yet." }) : chart.songs.map((song, index) => (0, jsx.jsx)(ChartSong, { song, index, isAll, categories, copied, onCopy: copySearch, playingKey, onPlay: togglePreview }, `${song.rank ?? index}-${song.title ?? index}`)),
             chart.disclaimer && (0, jsx.jsx)("p", { className: "mx-auto max-w-2xl text-sm leading-relaxed text-gray-500", children: chart.disclaimer }),
             chart.generatedAt && (0, jsx.jsxs)("p", { className: "mx-auto max-w-2xl text-xs font-bold uppercase tracking-widest text-gray-400", children: ["Updated ", String(chart.generatedAt)] }),
           ] }),
