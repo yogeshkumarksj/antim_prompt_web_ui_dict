@@ -1,21 +1,15 @@
 import { r as interop } from "./rolldown-runtime-hePW80VL.js";
-import { C as CopyIcon, N as ReactNS, c as AlertIcon, h as MusicIcon, w as ClockIcon } from "./vendor-icons-CD2Hvhn_.js";
+import { C as CopyIcon, N as ReactNS, c as AlertIcon, w as ClockIcon } from "./vendor-icons-CD2Hvhn_.js";
 import { t as jsxRuntime } from "./vendor-react-Ch6a_wip.js";
 import { t as axios } from "./vendor-axios-DhiQ7QLW.js";
 import { a as songsUrl, t as Footer } from "./index-RMZ4YpJu.js";
 import { c as serviceById, u as PageHeader } from "./BusinessFacts-Dps7jRTH.js";
-import { i as interpretAiResponse, o as normalizeSongs, r as interpretAiError, s as songsRequestBody } from "./aiFeature-Cx7U9uqu.js";
-import { n as ReportList } from "./AiToolScreen-ISyi6LGU.js";
+import { i as interpretAiResponse, r as interpretAiError } from "./aiFeature-Cx7U9uqu.js";
 
 const React = interop(ReactNS(), 1);
 const jsx = jsxRuntime();
 const service = serviceById("songs");
-const fields = [
-  { name: "niche", label: "Niche", required: true, maxLength: 80, placeholder: "fitness" },
-  { name: "region", label: "Region", maxLength: 40, placeholder: "Leave blank for Global" },
-  { name: "language", label: "Language", maxLength: 40, placeholder: "Optional, for example Hindi" },
-];
-const examples = ["Fitness", "Wedding", "Devotional", "Cafes"];
+const COVER_SIZE = 64;
 
 function pretty(value) {
   return String(value).replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -54,6 +48,23 @@ function categoryLabel(value, categories) {
   const text = String(value);
   const match = categories.find((item) => item.id === text || item.label.toLowerCase() === text.toLowerCase() || item.id.toLowerCase() === text.toLowerCase());
   return match?.label || text;
+}
+
+function safeHttpUrl(value) {
+  if (typeof value !== "string" || !value.trim()) return "";
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol === "https:" || url.protocol === "http:") return url.href;
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function reelsLabel(count) {
+  if (typeof count !== "number" || !Number.isFinite(count)) return "";
+  const noun = count === 1 ? "reel" : "reels";
+  return `Used in ${count} ${noun}`;
 }
 
 function readOk(response) {
@@ -99,41 +110,59 @@ function ErrorNote({ message }) {
   });
 }
 
-function SongResults({ result }) {
-  const hasBody = result.summary || result.songs.length || result.howToUse.length;
-  if (!hasBody) {
-    return (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "The report came back empty. Try a different niche." });
-  }
-  const context = [result.niche, result.region, result.language].filter(Boolean).join(" · ");
-  return (0, jsx.jsxs)("div", {
-    className: "space-y-6",
-    children: [
-      (result.summary || result.disclaimer) && (0, jsx.jsxs)("div", {
-        className: "rounded-[2rem] border border-gridBorder bg-white p-6 shadow-sm sm:p-8",
-        children: [
-          (0, jsx.jsxs)("div", { className: "mb-3 flex items-center text-primaryPurple", children: [(0, jsx.jsx)(MusicIcon, { size: 20, className: "mr-2" }), (0, jsx.jsx)("h3", { className: "text-lg font-black text-gray-900", children: "Audio ideas" })] }),
-          result.summary && (0, jsx.jsx)("p", { className: "text-sm leading-relaxed text-gray-700 sm:text-base", children: result.summary }),
-          context && (0, jsx.jsx)("p", { className: "mt-3 text-xs font-bold uppercase tracking-widest text-gray-400", children: context }),
-          result.disclaimer && (0, jsx.jsx)("p", { className: "mt-4 text-sm leading-relaxed text-gray-500", children: result.disclaimer }),
-        ],
-      }),
-      result.songs.length > 0 && (0, jsx.jsx)("div", {
-        className: "grid grid-cols-1 gap-4 md:grid-cols-2",
-        children: result.songs.map((song) => (0, jsx.jsxs)("article", {
-          className: "rounded-[2rem] border border-gridBorder bg-white p-6 shadow-sm",
+function CoverPlaceholder({ gradientId }) {
+  const stroke = `url(#${gradientId})`;
+  return (0, jsx.jsx)("div", {
+    className: "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-purple-50",
+    style: { width: COVER_SIZE, height: COVER_SIZE },
+    "aria-hidden": "true",
+    children: (0, jsx.jsxs)("svg", {
+      width: "28",
+      height: "28",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      "aria-hidden": "true",
+      children: [
+        (0, jsx.jsx)("defs", { children: (0, jsx.jsxs)("linearGradient", {
+          id: gradientId,
+          x1: "3",
+          y1: "3",
+          x2: "21",
+          y2: "21",
+          gradientUnits: "userSpaceOnUse",
           children: [
-            (0, jsx.jsx)("h3", { className: "text-xl font-black tracking-tight text-gray-900", children: song.title }),
-            song.artist && (0, jsx.jsx)("p", { className: "mt-1 text-sm font-bold text-secondaryBlue", children: song.artist }),
-            song.why && (0, jsx.jsx)("p", { className: "mt-3 text-sm leading-relaxed text-gray-600", children: song.why }),
-            song.reelIdea && (0, jsx.jsxs)("p", { className: "mt-3 text-sm text-gray-700", children: [(0, jsx.jsx)("span", { className: "font-black text-gray-400", children: "Reel idea · " }), song.reelIdea] }),
-            song.hook && (0, jsx.jsx)("p", { className: "mt-3 rounded-2xl bg-purple-50 p-3 text-sm font-medium text-gray-700", children: song.hook }),
-            song.hashtags.length > 0 && (0, jsx.jsx)("div", { className: "mt-3 flex flex-wrap gap-2", children: song.hashtags.map((tag) => (0, jsx.jsxs)("span", { className: "rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600", children: ["#", String(tag).replace(/^#/, "")] }, tag)) }),
+            (0, jsx.jsx)("stop", { offset: "0%", stopColor: "#8B5CF6" }),
+            (0, jsx.jsx)("stop", { offset: "100%", stopColor: "#0EA5E9" }),
           ],
-        }, song.id)),
-      }),
-      (0, jsx.jsx)(ReportList, { title: "How to use these sounds", items: result.howToUse }),
-    ],
+        }) }),
+        (0, jsx.jsx)("path", { d: "M9 18V5l12-2v13", stroke, strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }),
+        (0, jsx.jsx)("circle", { cx: "6", cy: "18", r: "3", stroke, strokeWidth: "2" }),
+        (0, jsx.jsx)("circle", { cx: "18", cy: "16", r: "3", stroke, strokeWidth: "2" }),
+      ],
+    }),
   });
+}
+
+function CoverArt({ song, gradientId }) {
+  const src = safeHttpUrl(song?.cover_url);
+  const [broken, setBroken] = (0, React.useState)(false);
+  (0, React.useEffect)(() => {
+    setBroken(false);
+  }, [src]);
+  if (src && !broken) {
+    return (0, jsx.jsx)("img", {
+      src,
+      alt: "",
+      loading: "lazy",
+      decoding: "async",
+      width: COVER_SIZE,
+      height: COVER_SIZE,
+      onError: () => setBroken(true),
+      className: "h-16 w-16 shrink-0 rounded-2xl object-cover bg-purple-50",
+      style: { width: COVER_SIZE, height: COVER_SIZE },
+    });
+  }
+  return (0, jsx.jsx)(CoverPlaceholder, { gradientId });
 }
 
 function ChartSong({ song, index, isAll, categories, copied, onCopy }) {
@@ -141,22 +170,25 @@ function ChartSong({ song, index, isAll, categories, copied, onCopy }) {
   const tags = Array.isArray(song.hashtags) ? song.hashtags : [];
   const searchText = typeof song.search_text === "string" ? song.search_text : "";
   const key = `${song.rank ?? index}-${song.title ?? index}`;
+  const reels = reelsLabel(song.reels_count);
   return (0, jsx.jsxs)("article", {
-    className: "flex items-start gap-4 rounded-[2rem] border border-gridBorder bg-white p-5 shadow-sm sm:p-6",
+    className: "song-chart-card rounded-[2rem] border border-gridBorder bg-white p-5 shadow-sm sm:p-6",
     children: [
-      (0, jsx.jsx)("div", { className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-lg font-black text-primaryPurple", children: rank }),
-      (0, jsx.jsxs)("div", { className: "flex-1", children: [
-        (0, jsx.jsx)("h3", { className: "text-xl font-black tracking-tight text-gray-900", children: song.title || "Untitled track" }),
-        song.artist && (0, jsx.jsx)("p", { className: "mt-1 text-sm font-bold text-secondaryBlue", children: song.artist }),
+      (0, jsx.jsx)("div", { className: "song-chart-rank flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-lg font-black text-primaryPurple", children: rank }),
+      (0, jsx.jsx)("div", { className: "song-chart-cover", children: (0, jsx.jsx)(CoverArt, { song, gradientId: `song-cover-${index}` }) }),
+      (0, jsx.jsxs)("div", { className: "song-chart-body", style: { minWidth: 0 }, children: [
+        (0, jsx.jsx)("h3", { className: "break-words text-xl font-black tracking-tight text-gray-900", children: song.title || "Untitled track" }),
+        song.artist && (0, jsx.jsx)("p", { className: "mt-1 break-words text-sm font-bold text-secondaryBlue", children: song.artist }),
         isAll && (song.category || song.rank != null) && (0, jsx.jsx)("p", { className: "mt-1 text-xs font-bold uppercase tracking-widest text-gray-400", children: [categoryLabel(song.category, categories), song.rank != null ? `#${song.rank}` : ""].filter(Boolean).join(" · ") }),
         song.why_trending && (0, jsx.jsx)("p", { className: "mt-3 text-sm leading-relaxed text-gray-600", children: song.why_trending }),
+        reels && (0, jsx.jsx)("p", { className: "mt-2 text-xs font-bold text-gray-500", children: reels }),
         tags.length > 0 && (0, jsx.jsx)("div", { className: "mt-3 flex flex-wrap gap-2", children: tags.map((tag) => (0, jsx.jsxs)("span", { className: "rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600", children: ["#", String(tag).replace(/^#/, "")] }, `${key}-${tag}`)) }),
       ] }),
       (0, jsx.jsxs)("button", {
         type: "button",
         disabled: !searchText,
         onClick: () => onCopy(key, searchText),
-        className: "inline-flex shrink-0 items-center text-sm font-bold text-primaryPurple hover:underline disabled:opacity-50",
+        className: "song-chart-copy inline-flex shrink-0 items-center text-sm font-bold text-primaryPurple hover:underline disabled:opacity-50",
         children: [(0, jsx.jsx)(CopyIcon, { size: 16, className: "mr-1" }), copied === key ? "Copied" : "Copy"],
       }),
     ],
@@ -171,11 +203,6 @@ function ViralSongs() {
   const [chartError, setChartError] = (0, React.useState)("");
   const [chartLimit, setChartLimit] = (0, React.useState)(false);
   const [copied, setCopied] = (0, React.useState)("");
-  const [values, setValues] = (0, React.useState)({ niche: "", region: "", language: "" });
-  const [customLoading, setCustomLoading] = (0, React.useState)(false);
-  const [customResult, setCustomResult] = (0, React.useState)(null);
-  const [customError, setCustomError] = (0, React.useState)("");
-  const [customLimit, setCustomLimit] = (0, React.useState)(false);
 
   (0, React.useEffect)(() => {
     let cancel = false;
@@ -248,39 +275,13 @@ function ViralSongs() {
     }
   };
 
-  const submitCustom = async (event) => {
-    event.preventDefault();
-    if (String(values.niche || "").trim().length < 2) {
-      setCustomResult(null);
-      setCustomLimit(false);
-      setCustomError("Enter a niche of at least 2 characters.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomLimit(false);
-    setCustomResult(null);
-    try {
-      const response = await axios.post(songsUrl, songsRequestBody(values));
-      const outcome = interpretAiResponse(response);
-      if (outcome.kind === "limit") setCustomLimit(true);
-      else if (outcome.kind === "success") setCustomResult(normalizeSongs(outcome.data));
-      else setCustomError(outcome.message);
-    } catch (error) {
-      const outcome = interpretAiError(error);
-      if (outcome.kind === "limit") setCustomLimit(true);
-      else setCustomError(outcome.message);
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
   const chips = [{ id: "all", label: "All" }, ...(categories.length ? categories : [{ id: "trending", label: "Trending" }])];
   const isAll = category === "all";
 
   return (0, jsx.jsxs)("div", {
     className: "flex min-h-screen flex-col bg-[#F8FAFC]",
     children: [
+      (0, jsx.jsx)("style", { children: ".song-chart-card{display:grid;grid-template-columns:auto 64px minmax(0,1fr);grid-template-areas:\"rank cover body\" \"rank cover copy\";column-gap:.75rem;row-gap:.75rem;align-items:start}.song-chart-rank{grid-area:rank}.song-chart-cover{grid-area:cover}.song-chart-body{grid-area:body}.song-chart-copy{grid-area:copy;justify-self:end}@media (min-width:640px){.song-chart-card{grid-template-columns:auto 64px minmax(0,1fr) auto;grid-template-areas:\"rank cover body copy\";column-gap:1rem}}" }),
       (0, jsx.jsx)(PageHeader, { title: service.name, backTo: "/ai-magic", backLabel: "Back to AI Magic" }),
       (0, jsx.jsxs)("main", {
         className: "mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:py-10",
@@ -314,29 +315,6 @@ function ViralSongs() {
             chart.songs.length === 0 ? (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "No songs in this category yet." }) : chart.songs.map((song, index) => (0, jsx.jsx)(ChartSong, { song, index, isAll, categories, copied, onCopy: copySearch }, `${song.rank ?? index}-${song.title ?? index}`)),
             chart.disclaimer && (0, jsx.jsx)("p", { className: "mx-auto max-w-2xl text-sm leading-relaxed text-gray-500", children: chart.disclaimer }),
             chart.generatedAt && (0, jsx.jsxs)("p", { className: "mx-auto max-w-2xl text-xs font-bold uppercase tracking-widest text-gray-400", children: ["Updated ", String(chart.generatedAt)] }),
-          ] }),
-          (0, jsx.jsxs)("section", { className: "mt-12", children: [
-            (0, jsx.jsx)("h3", { className: "text-center text-2xl font-black text-gray-900", children: "Custom ideas" }),
-            (0, jsx.jsx)("p", { className: "mx-auto mt-3 max-w-2xl text-center text-sm font-medium leading-relaxed text-gray-500", children: "Enter a niche. Region and language are optional. This asks the server for free audio ideas. It is not a live Instagram scan." }),
-            (0, jsx.jsxs)("form", {
-              onSubmit: submitCustom,
-              className: "mx-auto mt-6 max-w-2xl space-y-3 rounded-[2rem] border border-gridBorder bg-white p-4 shadow-sm sm:p-6",
-              children: [
-                fields.map((field) => (0, jsx.jsxs)("label", {
-                  className: "block",
-                  htmlFor: `songs-${field.name}`,
-                  children: [
-                    (0, jsx.jsxs)("span", { className: "mb-1 block text-[11px] font-black uppercase tracking-widest text-gray-400", children: [field.label, field.required ? "" : " · optional"] }),
-                    (0, jsx.jsx)("input", { id: `songs-${field.name}`, type: "text", maxLength: field.maxLength, placeholder: field.placeholder, value: values[field.name] || "", onChange: (event) => setValues((current) => ({ ...current, [field.name]: event.target.value })), className: "w-full rounded-2xl border border-gridBorder bg-promptBox p-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primaryPurple/20 sm:text-base" }),
-                  ],
-                }, field.name)),
-                (0, jsx.jsx)("button", { type: "submit", disabled: customLoading, className: "w-full rounded-2xl bg-primaryPurple px-8 py-4 font-bold text-white transition-all hover:shadow-lg hover:shadow-purple-200 disabled:opacity-50 sm:w-auto", children: customLoading ? "Finding audio ideas..." : "FIND SONGS" }),
-              ],
-            }),
-            (0, jsx.jsx)("div", { className: "mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2", children: examples.map((example) => (0, jsx.jsx)("button", { type: "button", onClick: () => setValues((current) => ({ ...current, niche: example })), className: "rounded-full bg-white px-3 py-1.5 text-xs font-bold text-gray-600 shadow-sm ring-1 ring-gridBorder hover:text-primaryPurple", children: example }, example)) }),
-            customLimit && !customLoading && (0, jsx.jsx)(LimitNote, {}),
-            !customLimit && (0, jsx.jsx)(ErrorNote, { message: customError }),
-            customResult && !customLoading && (0, jsx.jsx)("div", { className: "mt-10", children: (0, jsx.jsx)(SongResults, { result: customResult }) }),
           ] }),
         ],
       }),
