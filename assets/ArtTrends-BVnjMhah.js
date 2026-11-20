@@ -1,21 +1,15 @@
 import { r as interop } from "./rolldown-runtime-hePW80VL.js";
-import { C as CopyIcon, N as ReactNS, c as AlertIcon, s as Sparkles, w as ClockIcon } from "./vendor-icons-CD2Hvhn_.js";
+import { C as CopyIcon, N as ReactNS, c as AlertIcon, w as ClockIcon } from "./vendor-icons-CD2Hvhn_.js";
 import { t as jsxRuntime } from "./vendor-react-Ch6a_wip.js";
 import { t as axios } from "./vendor-axios-DhiQ7QLW.js";
 import { r as artUrl, t as Footer } from "./index-RMZ4YpJu.js";
 import { c as serviceById, u as PageHeader } from "./BusinessFacts-Dps7jRTH.js";
-import { a as normalizeArt, i as interpretAiResponse, n as artRequestBody, r as interpretAiError } from "./aiFeature-Cx7U9uqu.js";
-import { n as ReportList } from "./AiToolScreen-ISyi6LGU.js";
+import { i as interpretAiResponse, r as interpretAiError } from "./aiFeature-Cx7U9uqu.js";
 import { Masonry, PhotoFrame, PhotoMeta } from "./photoFrame.js";
 
 const React = interop(ReactNS(), 1);
 const jsx = jsxRuntime();
 const service = serviceById("art");
-const fields = [
-  { name: "niche", label: "Niche", required: true, maxLength: 80, placeholder: "ceramics" },
-  { name: "platform", label: "Platform", maxLength: 40, placeholder: "Leave blank for Instagram" },
-];
-const examples = ["Ceramics", "Portrait", "Product photo", "Festive"];
 
 function pretty(value) {
   return String(value).replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -149,25 +143,6 @@ function TrendFooter({ meta, title, aside }) {
   });
 }
 
-function IdeaCard({ trend }) {
-  const [meta, setMeta] = (0, React.useState)(null);
-  return (0, jsx.jsxs)("article", {
-    className: "overflow-hidden rounded-[2rem] border border-gridBorder bg-white shadow-sm",
-    children: [
-      trend.imageUrl ? (0, jsx.jsx)(PhotoFrame, { src: trend.imageUrl, alt: trend.name || "", meta: { image_url: trend.imageUrl }, hideCaption: true, onMetrics: setMeta }) : null,
-      (0, jsx.jsxs)("div", { className: "p-3", children: [
-        meta?.caption ? (0, jsx.jsx)(PhotoMeta, { caption: meta.caption, orient: meta.orient }) : null,
-        (0, jsx.jsx)("h3", { className: `${meta?.caption ? "mt-2 " : ""}font-bold text-gray-800 text-sm line-clamp-1`, children: trend.name }),
-        trend.why && (0, jsx.jsx)("p", { className: "mt-3 text-sm leading-relaxed text-gray-600", children: trend.why }),
-        trend.visualCues.length > 0 && (0, jsx.jsx)("div", { className: "mt-3 flex flex-wrap gap-2", children: trend.visualCues.map((cue) => (0, jsx.jsx)("span", { className: "rounded-full bg-pink-50 px-2.5 py-1 text-xs font-bold text-accentPink", children: cue }, cue)) }),
-        trend.caption && (0, jsx.jsxs)("p", { className: "mt-3 text-sm text-gray-700", children: [(0, jsx.jsx)("span", { className: "font-black text-gray-400", children: "Caption · " }), trend.caption] }),
-        trend.prompt && (0, jsx.jsx)(CopyBlock, { label: "Prompt", text: trend.prompt, buttonLabel: "Copy prompt" }),
-        trend.negativePrompt && (0, jsx.jsx)(CopyBlock, { label: "Negative prompt", text: trend.negativePrompt }),
-      ] }),
-    ],
-  });
-}
-
 function TrendTile({ trend, aside, onOpen }) {
   const [meta, setMeta] = (0, React.useState)(null);
   return (0, jsx.jsxs)("button", {
@@ -185,32 +160,6 @@ function TrendTile({ trend, aside, onOpen }) {
   });
 }
 
-function ArtResults({ result }) {
-  const hasBody = result.summary || result.trends.length || result.workflow.length;
-  if (!hasBody) {
-    return (0, jsx.jsx)("div", { className: "mx-auto max-w-2xl rounded-2xl border border-gridBorder bg-white p-6 text-center text-sm font-medium text-gray-500", children: "The report came back empty. Try a different niche." });
-  }
-  const context = [result.niche, result.platform].filter(Boolean).join(" · ");
-  return (0, jsx.jsxs)("div", {
-    className: "space-y-6",
-    children: [
-      (result.summary || result.disclaimer) && (0, jsx.jsxs)("div", {
-        className: "rounded-[2rem] border border-gridBorder bg-white p-6 shadow-sm sm:p-8",
-        children: [
-          (0, jsx.jsxs)("div", { className: "mb-3 flex items-center text-accentPink", children: [(0, jsx.jsx)(Sparkles, { size: 20, className: "mr-2" }), (0, jsx.jsx)("h3", { className: "text-lg font-black text-gray-900", children: "Style notes" })] }),
-          result.summary && (0, jsx.jsx)("p", { className: "text-sm leading-relaxed text-gray-700 sm:text-base", children: result.summary }),
-          context && (0, jsx.jsx)("p", { className: "mt-3 text-xs font-bold uppercase tracking-widest text-gray-400", children: context }),
-          result.disclaimer && (0, jsx.jsx)("p", { className: "mt-4 text-sm leading-relaxed text-gray-500", children: result.disclaimer }),
-        ],
-      }),
-      result.trends.length > 0 && (0, jsx.jsx)(Masonry, {
-        children: result.trends.map((trend) => (0, jsx.jsx)(IdeaCard, { trend }, trend.id)),
-      }),
-      (0, jsx.jsx)(ReportList, { title: "Workflow", items: result.workflow }),
-    ],
-  });
-}
-
 function ArtTrends() {
   const [categories, setCategories] = (0, React.useState)([]);
   const [category, setCategory] = (0, React.useState)("");
@@ -222,11 +171,6 @@ function ArtTrends() {
   const [limit, setLimit] = (0, React.useState)(false);
   const [selected, setSelected] = (0, React.useState)(null);
   const dialogRef = (0, React.useRef)(null);
-  const [values, setValues] = (0, React.useState)({ niche: "", platform: "" });
-  const [customLoading, setCustomLoading] = (0, React.useState)(false);
-  const [customResult, setCustomResult] = (0, React.useState)(null);
-  const [customError, setCustomError] = (0, React.useState)("");
-  const [customLimit, setCustomLimit] = (0, React.useState)(false);
 
   (0, React.useEffect)(() => {
     let cancel = false;
@@ -297,33 +241,6 @@ function ArtTrends() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
-  const submitCustom = async (event) => {
-    event.preventDefault();
-    if (String(values.niche || "").trim().length < 2) {
-      setCustomResult(null);
-      setCustomLimit(false);
-      setCustomError("Enter a niche of at least 2 characters.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomLimit(false);
-    setCustomResult(null);
-    try {
-      const response = await axios.post(artUrl, artRequestBody(values));
-      const outcome = interpretAiResponse(response);
-      if (outcome.kind === "limit") setCustomLimit(true);
-      else if (outcome.kind === "success") setCustomResult(normalizeArt(outcome.data));
-      else setCustomError(outcome.message);
-    } catch (err) {
-      const outcome = interpretAiError(err);
-      if (outcome.kind === "limit") setCustomLimit(true);
-      else setCustomError(outcome.message);
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
   const chips = [{ id: "all", label: "All" }, ...(categories.length ? categories : [{ id: "trending", label: "Trending" }])];
   const isAll = category === "all";
 
@@ -369,29 +286,6 @@ function ArtTrends() {
             }),
             disclaimer && (0, jsx.jsx)("p", { className: "mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-gray-500", children: disclaimer }),
             generatedAt && (0, jsx.jsxs)("p", { className: "mx-auto mt-2 max-w-2xl text-xs font-bold uppercase tracking-widest text-gray-400", children: ["Updated ", String(generatedAt)] }),
-          ] }),
-          (0, jsx.jsxs)("section", { className: "mt-12", children: [
-            (0, jsx.jsx)("h3", { className: "text-center text-2xl font-black text-gray-900", children: "Custom ideas" }),
-            (0, jsx.jsx)("p", { className: "mx-auto mt-3 max-w-2xl text-center text-sm font-medium leading-relaxed text-gray-500", children: "Enter a niche. Platform is optional and defaults to Instagram on the server. This asks for free style notes and original prompts. It is not a live Instagram scrape." }),
-            (0, jsx.jsxs)("form", {
-              onSubmit: submitCustom,
-              className: "mx-auto mt-6 max-w-2xl space-y-3 rounded-[2rem] border border-gridBorder bg-white p-4 shadow-sm sm:p-6",
-              children: [
-                fields.map((field) => (0, jsx.jsxs)("label", {
-                  className: "block",
-                  htmlFor: `art-${field.name}`,
-                  children: [
-                    (0, jsx.jsxs)("span", { className: "mb-1 block text-[11px] font-black uppercase tracking-widest text-gray-400", children: [field.label, field.required ? "" : " · optional"] }),
-                    (0, jsx.jsx)("input", { id: `art-${field.name}`, type: "text", maxLength: field.maxLength, placeholder: field.placeholder, value: values[field.name] || "", onChange: (event) => setValues((current) => ({ ...current, [field.name]: event.target.value })), className: "w-full rounded-2xl border border-gridBorder bg-promptBox p-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primaryPurple/20 sm:text-base" }),
-                  ],
-                }, field.name)),
-                (0, jsx.jsx)("button", { type: "submit", disabled: customLoading, className: "w-full rounded-2xl bg-primaryPurple px-8 py-4 font-bold text-white transition-all hover:shadow-lg hover:shadow-purple-200 disabled:opacity-50 sm:w-auto", children: customLoading ? "Checking AI art trends..." : "SHOW TRENDS" }),
-              ],
-            }),
-            (0, jsx.jsx)("div", { className: "mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2", children: examples.map((example) => (0, jsx.jsx)("button", { type: "button", onClick: () => setValues((current) => ({ ...current, niche: example })), className: "rounded-full bg-white px-3 py-1.5 text-xs font-bold text-gray-600 shadow-sm ring-1 ring-gridBorder hover:text-primaryPurple", children: example }, example)) }),
-            customLimit && !customLoading && (0, jsx.jsx)(LimitNote, {}),
-            !customLimit && (0, jsx.jsx)(ErrorNote, { message: customError }),
-            customResult && !customLoading && (0, jsx.jsx)("div", { className: "mt-10", children: (0, jsx.jsx)(ArtResults, { result: customResult }) }),
           ] }),
         ],
       }),
